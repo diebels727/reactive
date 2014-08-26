@@ -2,7 +2,11 @@ package main
 
 import(
   "github.com/diebels727/spyglass"
+  "github.com/gorilla/mux"
   "flag"
+  "net/http"
+  "fmt"
+  // "time"
 )
 
 
@@ -24,17 +28,43 @@ func init() {
 
 func main() {
   flag.Parse()
-  bot := spyglass.New(server,port,nick,username,password)
+  var bot *spyglass.Bot
+  bot = spyglass.New(server,port,nick,username,password)
   conn := bot.Connect()
   defer conn.Close()
 
   bot.Run()
 
+  // go func(bot *spyglass.Bot) {
+  //   fmt.Println("ticking")
+  //   ticker := time.NewTicker(time.Second * 5)
+  //   for _ = range ticker.C {
+  //     bot.Cmd("PING irc.freenode.net")
+  //   }
+  // }(bot)
+
   <- bot.Ready
+
+  // go func(bot *spyglass.Bot) {
+
+
+  // }(bot)
 
   bot.User()
   bot.Nick()
   bot.Join(command_and_control)
+
+  router := mux.NewRouter()
+  router.Methods("POST")
+  router.HandleFunc("/{channel}",func(response http.ResponseWriter,request *http.Request) {
+    params := mux.Vars(request)
+    channel := "#" + params["channel"]
+    fmt.Println("Joining channel ",channel)
+    bot.Join(channel)
+  })
+
+  http.Handle("/",router)
+  http.ListenAndServe(":9000",nil)
 
   <- bot.Stopped
 }
