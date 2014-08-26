@@ -1,37 +1,42 @@
 package main
 
 import(
-  "fmt"
   "github.com/diebels727/spyglass"
-  "time"
+  "flag"
 )
 
 
+var server string
+var port string
+var nick string
+var username string
+var password string
+var command_and_control string
+
+func init() {
+  flag.StringVar(&server,"server","irc.freenode.org","IRC server FQDN")
+  flag.StringVar(&port,"port","6667","IRC server port number")
+  flag.StringVar(&nick,"nick","","Name of the bot visible on IRC channel")
+  flag.StringVar(&username,"username","logbot","Username to login with to IRC")
+  flag.StringVar(&password,"password","","Password for the IRC server")
+  flag.StringVar(&command_and_control,"command_and_control","#spyglass-c&c","Command and control IRC channel")
+}
+
 func main() {
-
-  server := "localhost"
-  m := spyglass.New(server,"6667","nick89122","jiggly101001","")
-  conn := m.Connect()
+  flag.Parse()
+  bot := spyglass.New(server,port,nick,username,password)
+  conn := bot.Connect()
   defer conn.Close()
-  m.Run()
 
-  user_cmd := fmt.Sprintf("USER %s 8 * :%s\r\n", "nick89122", "nick89122")
-  nick_cmd := fmt.Sprintf("NICK %s\r\n", "nick89122")
-  fmt.Println("[TestInit] Sending USER command")
-  m.Send(user_cmd)
-  fmt.Println("[TestInit] Sending NICK command")
-  m.Send(nick_cmd)
-  fmt.Println("[TestInit] Sending JOIN command")
-  m.Join("#cinch-bots")
-  fmt.Println("[TestInit] Sending JOIN command")
-  m.Send("JOIN #foofoo\r\n")
+  bot.Run()
 
-  fmt.Println("Sleeping for 5 seconds")
-  time.Sleep(time.Second * 5)
+  <- bot.Ready
 
-  for {
-    time.Sleep(time.Second * 1)
-  }
+  bot.User()
+  bot.Nick()
+  bot.Join(command_and_control)
+
+  <- bot.Stopped
 }
 
 
