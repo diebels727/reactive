@@ -23,6 +23,7 @@ var password string
 var command_and_control string
 var n string
 var m string
+var s string
 
 var fake *faker.Faker
 
@@ -41,6 +42,7 @@ func init() {
   flag.StringVar(&command_and_control,"command_and_control","#spyglass-c&c","Command and control IRC channel")
   flag.StringVar(&n,"n","1","Number of clients; minimum is one")
   flag.StringVar(&m,"m","50","Minimum number of users per channel")
+  flag.StringVar(&s,"s","100","Amount of time to sleep between channel joins")
 }
 
 type Clients [](*spyglass.Bot)
@@ -57,6 +59,8 @@ func main() {
 
   var channels map[string]Channel
   channels = make(map[string]Channel)
+  var join map[string]Channel
+  join = make(map[string]Channel)
   var channel Channel
 
   num_clients,err := strconv.Atoi(n)
@@ -99,23 +103,21 @@ func main() {
     if err != nil {
       panic("couldn't convert minimum to integer!")
     }
-
-    for _,channel := range channels {
-      if channel.users >
-      if channel.users > 100 {
-        num_100++
-      }
-      if channel.users > 500 {
-        num_500++
-      }
-      if channel.users > 50 {
-        num_50++
-      }
+    // sleep_duration,err := strconv.Atoi(s)
+    if err != nil {
+      panic("couldn't convert sleep duration to integer!")
     }
-    fmt.Println("[NUM] num_channels: ",num_channels)
-    fmt.Println("[NUM] num_100: ",num_100)
-    fmt.Println("[NUM] num_500: ",num_500)
-    fmt.Println("[NUM] num_50: ",num_50)
+
+    id := 0
+    for _,channel := range channels {
+      if channel.users > minimum {
+        join[channel.name] = channel
+        client := clients[id % len(clients)]
+        client.Join(channel.name)
+        time.Sleep(time.Duration(time.Millisecond * 100))
+      }
+      id++
+    }
 
     // for name,_ := range channels {
     //   channels[name] = true
