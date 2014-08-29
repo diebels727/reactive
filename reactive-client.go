@@ -15,6 +15,8 @@ import(
   "os"
   "path"
   "path/filepath"
+
+  "code.google.com/p/go-sqlite/go1/sqlite3"
 )
 
 
@@ -52,8 +54,10 @@ type Clients [](*spyglass.Bot)
 
 type Client *spyglass.Bot
 
-func NewClient(server string,port string) (*spyglass.Bot) {
-  return spyglass.New(server,port,fake.Username(),fake.Username(),"")
+func NewClient(server string,port string,db *sqlite3.Conn) (bot *spyglass.Bot) {
+  bot = spyglass.New(server,port,fake.Username(),fake.Username(),"")
+  bot.DB = db
+  return bot
 }
 
 func logPath(server string) (string,error) {
@@ -74,10 +78,31 @@ func main() {
   fake = faker.New()
   flag.Parse()
 
-  err := makeLogPath(server)
+
+  log_path,err := logPath(server)
   if err != nil {
     panic("Cannot create log path!")
   }
+  err = makeLogPath(server)
+  if err != nil {
+    panic("Cannot create log path!")
+  }
+
+  db_path := path.Join(log_path,"db.sqlite3")
+  db,err := sqlite3.Open(db_path)
+  if err != nil {
+    panic("no handle to db!")
+  }
+  defer db.Close()
+
+  db.Exec(`CREATE TABLE events(
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    timestamp INTEGER,
+    source VARCHAR(255),
+    command VARCHAR(32),
+    target VARCHAR(64),
+    message TEXT
+    );`)
 
   var channels map[string]Channel
   channels = make(map[string]Channel)
@@ -93,7 +118,7 @@ func main() {
 
   clients = ([](*spyglass.Bot))(clients)
   for i:=0;i<len(clients);i++ {
-    clients[i] = NewClient(server,port)
+    clients[i] = NewClient(server,port,db)
     clients[i].Connect()
     time.Sleep(time.Duration(time.Second * 3))
     defer clients[i].Conn.Close()
@@ -125,7 +150,6 @@ func main() {
     if err != nil {
       panic("couldn't convert minimum to integer!")
     }
-    // sleep_duration,err := strconv.Atoi(s)
     if err != nil {
       panic("couldn't convert sleep duration to integer!")
     }
@@ -141,11 +165,6 @@ func main() {
       id++
     }
 
-    // for name,_ := range channels {
-    //   channels[name] = true
-    //   bot.Join(name)
-    //   time.Sleep(time.Duration(time.Millisecond * 250))
-    // }
   })
 
   //405 events are triggered when a client has joined too many channels
