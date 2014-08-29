@@ -180,7 +180,7 @@ func main() {
   master.User()
   master.Nick()
   master.Join(command_and_control)
-  master.List()
+  master.List(m)
 
   for id,client := range clients[1:] {
     fmt.Println("Starting up client #",id)
