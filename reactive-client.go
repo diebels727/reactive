@@ -60,6 +60,10 @@ func NewClient(server string,port string,db *sqlite3.Conn) (bot *spyglass.Bot) {
   return bot
 }
 
+func toSlug(str string) {
+  return strings.Replace(str,".","-",-1)
+}
+
 func logPath(server string) (string,error) {
   slug := strings.Replace(server,".","-",-1)
   log_path := path.Join(slug)
@@ -88,12 +92,12 @@ func main() {
     panic("Cannot create log path!")
   }
 
+
   db_path := path.Join(log_path,"db.sqlite3")
   db,err := sqlite3.Open(db_path)
   if err != nil {
     panic("no handle to db!")
   }
-  defer db.Close()
 
   db.Exec(`CREATE TABLE events(
     id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -103,6 +107,9 @@ func main() {
     target VARCHAR(64),
     message TEXT
     );`)
+
+  db.Close()
+
 
   var channels map[string]Channel
   channels = make(map[string]Channel)
@@ -117,7 +124,15 @@ func main() {
   clients := make(Clients,num_clients)
 
   clients = ([](*spyglass.Bot))(clients)
+  var db *sqlite3.Conn
   for i:=0;i<len(clients);i++ {
+
+    db,err = sqlite3.Open(db_path)
+    if err != nil {
+      panic("no handle to db!")
+    }
+    defer db.Close()
+
     clients[i] = NewClient(server,port,db)
     clients[i].Connect()
     time.Sleep(time.Duration(time.Second * 3))
