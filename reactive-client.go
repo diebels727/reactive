@@ -12,6 +12,9 @@ import(
   // "net"
   // "net/textproto"
   "time"
+  "os"
+  "path"
+  "path/filepath"
 )
 
 
@@ -34,10 +37,10 @@ type Channel struct {
 }
 
 func init() {
-  flag.StringVar(&server,"server","irc.freenode.net","IRC server FQDN")
+  flag.StringVar(&server,"server","localhost","IRC server FQDN")
   flag.StringVar(&port,"port","6667","IRC server port number")
   flag.StringVar(&nick,"nick","","Name of the bot visible on IRC channel")
-  flag.StringVar(&username,"username","","Username to login with to IRC")
+  flag.StringVar(&username,"username","","-Username to login with to IRC")
   flag.StringVar(&password,"password","","Password for the IRC server")
   flag.StringVar(&command_and_control,"command_and_control","#spyglass-c&c","Command and control IRC channel")
   flag.StringVar(&n,"n","1","Number of clients; minimum is one")
@@ -53,9 +56,28 @@ func NewClient(server string,port string) (*spyglass.Bot) {
   return spyglass.New(server,port,fake.Username(),fake.Username(),"")
 }
 
+func logPath(server string) (string,error) {
+  slug := strings.Replace(server,".","-",-1)
+  log_path := path.Join(slug)
+  abs_log_path,err := filepath.Abs(log_path)
+  return abs_log_path,err
+}
+
+func makeLogPath(server string) error {
+  log_path,err := logPath(server)
+  file_mode := os.FileMode(0777)
+  err = os.MkdirAll(log_path,file_mode)
+  return err
+}
+
 func main() {
   fake = faker.New()
   flag.Parse()
+
+  err := makeLogPath(server)
+  if err != nil {
+    panic("Cannot create log path!")
+  }
 
   var channels map[string]Channel
   channels = make(map[string]Channel)
