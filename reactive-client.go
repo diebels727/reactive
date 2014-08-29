@@ -60,7 +60,7 @@ func NewClient(server string,port string,db *sqlite3.Conn) (bot *spyglass.Bot) {
   return bot
 }
 
-func toSlug(str string) {
+func toSlug(str string) string {
   return strings.Replace(str,".","-",-1)
 }
 
@@ -92,25 +92,6 @@ func main() {
     panic("Cannot create log path!")
   }
 
-
-  db_path := path.Join(log_path,"db.sqlite3")
-  db,err := sqlite3.Open(db_path)
-  if err != nil {
-    panic("no handle to db!")
-  }
-
-  db.Exec(`CREATE TABLE events(
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    timestamp INTEGER,
-    source VARCHAR(255),
-    command VARCHAR(32),
-    target VARCHAR(64),
-    message TEXT
-    );`)
-
-  db.Close()
-
-
   var channels map[string]Channel
   channels = make(map[string]Channel)
   var join map[string]Channel
@@ -127,10 +108,17 @@ func main() {
   var db *sqlite3.Conn
   for i:=0;i<len(clients);i++ {
 
-    db,err = sqlite3.Open(db_path)
-    if err != nil {
-      panic("no handle to db!")
-    }
+    //need to handle better  ... but just want it to work right now
+    db_path := path.Join(log_path,"db.sqlite3")
+    db,_ = sqlite3.Open(db_path)
+    db.Exec(`CREATE TABLE events(
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      timestamp INTEGER,
+      source VARCHAR(255),
+      command VARCHAR(32),
+      target VARCHAR(64),
+      message TEXT
+      );`)
     defer db.Close()
 
     clients[i] = NewClient(server,port,db)
