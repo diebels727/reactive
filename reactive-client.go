@@ -180,7 +180,8 @@ func main() {
   master.User()
   master.Nick()
   master.Join(command_and_control)
-  master.List(m)
+  min,_ := strconv.Atoi(m)
+  master.List(min)
 
   for id,client := range clients[1:] {
     fmt.Println("Starting up client #",id)
