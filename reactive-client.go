@@ -109,7 +109,8 @@ func main() {
   for i:=0;i<len(clients);i++ {
 
     //need to handle better  ... but just want it to work right now
-    db_path := path.Join(log_path,"db.sqlite3")
+    db_name = "_"+toSlug(username)+".sqlite3"
+    db_path := path.Join(log_path,db_name)
     db,_ = sqlite3.Open(db_path)
     db.Exec(`CREATE TABLE events(
       id INTEGER PRIMARY KEY AUTOINCREMENT,
