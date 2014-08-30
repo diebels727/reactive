@@ -82,7 +82,6 @@ func main() {
   fake = faker.New()
   flag.Parse()
 
-
   log_path,err := logPath(server)
   if err != nil {
     panic("Cannot create log path!")
@@ -105,7 +104,9 @@ func main() {
   clients := make(Clients,num_clients)
 
   clients = ([](*spyglass.Bot))(clients)
+
   var db *sqlite3.Conn
+
   for i:=0;i<len(clients);i++ {
 
     //need to handle better  ... but just want it to work right now
@@ -114,6 +115,7 @@ func main() {
     db,_ = sqlite3.Open(db_path)
     db.Exec(`CREATE TABLE events(
       id INTEGER PRIMARY KEY AUTOINCREMENT,
+      bot VARCHAR(32),
       timestamp INTEGER,
       source VARCHAR(255),
       command VARCHAR(32),
@@ -123,8 +125,11 @@ func main() {
     defer db.Close()
 
     clients[i] = NewClient(server,port,db)
+
     clients[i].Connect()
+
     time.Sleep(time.Duration(time.Second * 3))
+
     defer clients[i].Conn.Close()
   }
 
@@ -137,6 +142,7 @@ func main() {
     arguments := event.RawArguments
     args := strings.Split(arguments," ")
     users,err := strconv.Atoi(args[2])
+
     if err != nil {
       panic("Num Users conversion error")
     }
@@ -162,8 +168,17 @@ func main() {
     for _,channel := range channels {
       if channel.users > minimum {
         join[channel.name] = channel
+
         client := clients[id % len(clients)]
+
+        debug_str := fmt.Sprintf("[DEBUG] client: %s channel.name: %s",client.name,channel.name)
+        fmt.Println(debug_str)
+
+
         client.Join(channel.name)
+        debug_str = fmt.Sprintf("[DEBUG] %s has joined %d channels.",client.name,len(bot.JoinChannels) )
+        fmt.Println(debug_str)
+
         time.Sleep(time.Duration(time.Millisecond * 100))
       }
       id++
@@ -184,9 +199,13 @@ func main() {
   master.List(min)
 
   for id,client := range clients[1:] {
-    fmt.Println("Starting up client #",id)
+
+    fmt.Println("[DEBUG] Starting up client #",id)
+
     client.Run()
+    fmt.Println("[DEBUG] Running client: ",client.name)
     <- client.Ready
+    fmt.Println("[DEBUG] Client is ready: ",client.name)
     client.User()
     client.Nick()
     client.Join(command_and_control)
