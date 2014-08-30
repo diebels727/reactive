@@ -171,12 +171,12 @@ func main() {
 
         client := clients[id % len(clients)]
 
-        debug_str := fmt.Sprintf("[DEBUG] client: %s channel.name: %s",client.name,channel.name)
+        debug_str := fmt.Sprintf("[DEBUG] client: %s channel.name: %s",client.GetNick(),channel.name)
         fmt.Println(debug_str)
 
 
         client.Join(channel.name)
-        debug_str = fmt.Sprintf("[DEBUG] %s has joined %d channels.",client.name,len(bot.JoinChannels) )
+        debug_str = fmt.Sprintf("[DEBUG] %s has joined %d channels.",client.GetNick(),len(client.JoinedChannels) )
         fmt.Println(debug_str)
 
         time.Sleep(time.Duration(time.Millisecond * 100))
@@ -203,9 +203,9 @@ func main() {
     fmt.Println("[DEBUG] Starting up client #",id)
 
     client.Run()
-    fmt.Println("[DEBUG] Running client: ",client.name)
+    fmt.Println("[DEBUG] Running client: ",client.GetNick())
     <- client.Ready
-    fmt.Println("[DEBUG] Client is ready: ",client.name)
+    fmt.Println("[DEBUG] Client is ready: ",client.GetNick())
     client.User()
     client.Nick()
     client.Join(command_and_control)
