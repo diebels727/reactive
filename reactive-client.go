@@ -167,13 +167,18 @@ func main() {
     channel = Channel{args[1],users,false}
 
     if channel.users > minimum {
+      debug_str := fmt.Sprintf("[DEBUG] Joining channel: %s,%d",args[1],args[2])
+      fmt.Println(debug_str)
       client := clients[oscillator % len(clients)]
-      debug_str := fmt.Sprintf("[DEBUG] client: %s channel.name: %s",client.GetNick(),channel.name)
+      debug_str = fmt.Sprintf("[DEBUG] client: %s channel.name: %s",client.GetNick(),channel.name)
       fmt.Println(debug_str)
       client.Join(channel.name)
       debug_str = fmt.Sprintf("[DEBUG] %s has joined %d channels.",client.GetNick(),len(client.JoinedChannels) )
       fmt.Println(debug_str)
+
       // time.Sleep(time.Duration(time.Millisecond * 100))
+
+      oscillator++
     }
 
     channels[channel.name] = channel
@@ -186,6 +191,8 @@ func main() {
 
   master.RegisterEventHandler("323",func(event *spyglass.Event) {
     debug_str := fmt.Sprintf("[DEBUG] Done listing channels!")
+    fmt.Println(debug_str)
+    debug_str = fmt.Sprintf("[DEBUG] Found %d channels!",len(channels))
     fmt.Println(debug_str)
   })
 
