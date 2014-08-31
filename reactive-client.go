@@ -157,7 +157,7 @@ func main() {
 
     args := strings.Split(arguments," ")
 
-    if len(args) < 1 {
+    if len(args) <= 1 {
       fmt.Println("[DEBUG] Expected arguments to be length 1, but got ",len(args))
       return
     }
@@ -169,7 +169,7 @@ func main() {
     s := fmt.Sprintf("[DEBUG 322] RawArguments: %s",arguments)
     fmt.Println(s)
 
-    if len(args) < 2 {
+    if len(args) <= 2 {
       fmt.Println("[DEBUG] Expected arguments to be length 2, but got ",len(args))
       return
     }
