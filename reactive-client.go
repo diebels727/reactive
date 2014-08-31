@@ -157,20 +157,40 @@ func main() {
 
     args := strings.Split(arguments," ")
 
+    if len(args) < 1 {
+      fmt.Println("[DEBUG] Expected arguments to be length 1, but got ",len(args))
+      return
+    }
+
+    name := args[1]
+
     var users int
-    if len(args) > 1 {
+
+    s := fmt.Sprintf("[DEBUG 322] RawArguments: %s",arguments)
+    fmt.Println(s)
+
+    if len(args) < 2 {
+      fmt.Println("[DEBUG] Expected arguments to be length 2, but got ",len(args))
+      return
+    }
+
+
+
+    // if len(args) > 1 {
       users,err := strconv.Atoi(args[2])
       if err != nil {
         fmt.Println("[DEBUG] Cannot handle event. Args: ",args," users: ",users)
         return
-        // panic("Num Users conversion error")
       }
-    } else {
-      fmt.Println("[DEBUG] Arguments are not long enough.")
-      return
-    }
+    // } else {
+    //   fmt.Println("[DEBUG] Arguments are not long enough.")
+    //   return
+    // }
 
-    channel = Channel{args[1],users,false}
+    channel = Channel{name,users,false}
+
+    s = fmt.Sprintf("[DEBUG 322] Will join name: %s, users: %d",name,users)
+    fmt.Println(s)
 
     if channel.users > minimum {
       debug_str := fmt.Sprintf("[DEBUG] Joining channel: %s,%d",args[1],args[2])
