@@ -160,8 +160,9 @@ func main() {
     users,err := strconv.Atoi(args[2])
 
     if err != nil {
-      fmt.Println("[DEBUG] Args: ",args)
-      panic("Num Users conversion error")
+      fmt.Println("[DEBUG] Cannot handle event. Args: ",args)
+      return
+      // panic("Num Users conversion error")
     }
 
     channel = Channel{args[1],users,false}
