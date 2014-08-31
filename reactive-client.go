@@ -157,12 +157,17 @@ func main() {
 
     args := strings.Split(arguments," ")
 
-    users,err := strconv.Atoi(args[2])
-
-    if err != nil {
-      fmt.Println("[DEBUG] Cannot handle event. Args: ",args)
+    var users int
+    if len(args) > 1 {
+      users,err := strconv.Atoi(args[2])
+      if err != nil {
+        fmt.Println("[DEBUG] Cannot handle event. Args: ",args," users: ",users)
+        return
+        // panic("Num Users conversion error")
+      }
+    } else {
+      fmt.Println("[DEBUG] Arguments are not long enough.")
       return
-      // panic("Num Users conversion error")
     }
 
     channel = Channel{args[1],users,false}
