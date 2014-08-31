@@ -154,10 +154,13 @@ func main() {
 
   master.RegisterEventHandler("322",func(event *spyglass.Event) {
     arguments := event.RawArguments
+
     args := strings.Split(arguments," ")
+
     users,err := strconv.Atoi(args[2])
 
     if err != nil {
+      fmt.Println("[DEBUG] Args: ",args)
       panic("Num Users conversion error")
     }
 
