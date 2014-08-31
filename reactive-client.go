@@ -93,8 +93,6 @@ func main() {
 
   var channels map[string]Channel
   channels = make(map[string]Channel)
-  var join map[string]Channel
-  join = make(map[string]Channel)
   var channel Channel
 
   num_clients,err := strconv.Atoi(n)
@@ -125,12 +123,19 @@ func main() {
     defer db.Close()
 
     clients[i] = NewClient(server,port,db)
-
-    clients[i].Connect()
-
+    client := clients[i]
+    client.Connect()
+    fmt.Println("[DEBUG] Starting up client #",i)
+    client.Run()
+    fmt.Println("[DEBUG] Running client: ",client.GetNick())
+    <- client.Ready
+    fmt.Println("[DEBUG] Client is ready: ",client.GetNick())
+    client.User()
+    client.Nick()
+    client.Join(command_and_control)
     time.Sleep(time.Duration(time.Second * 3))
+    defer client.Conn.Close()
 
-    defer clients[i].Conn.Close()
   }
 
   master := clients[0]
@@ -138,6 +143,15 @@ func main() {
   master.Run()
 
   //react to event 322, which is each listed channel
+  oscillator := 0
+  minimum,err := strconv.Atoi(m)
+  if err != nil {
+    panic("couldn't convert minimum to integer!")
+  }
+  if err != nil {
+    panic("couldn't convert sleep duration to integer!")
+  }
+
   master.RegisterEventHandler("322",func(event *spyglass.Event) {
     arguments := event.RawArguments
     args := strings.Split(arguments," ")
@@ -146,7 +160,19 @@ func main() {
     if err != nil {
       panic("Num Users conversion error")
     }
+
     channel = Channel{args[1],users,false}
+
+    if channel.users > minimum {
+      client := clients[oscillator % len(clients)]
+      debug_str := fmt.Sprintf("[DEBUG] client: %s channel.name: %s",client.GetNick(),channel.name)
+      fmt.Println(debug_str)
+      client.Join(channel.name)
+      debug_str = fmt.Sprintf("[DEBUG] %s has joined %d channels.",client.GetNick(),len(client.JoinedChannels) )
+      fmt.Println(debug_str)
+      // time.Sleep(time.Duration(time.Millisecond * 100))
+    }
+
     channels[channel.name] = channel
   })
 
@@ -156,34 +182,8 @@ func main() {
   // }
 
   master.RegisterEventHandler("323",func(event *spyglass.Event) {
-    minimum,err := strconv.Atoi(m)
-    if err != nil {
-      panic("couldn't convert minimum to integer!")
-    }
-    if err != nil {
-      panic("couldn't convert sleep duration to integer!")
-    }
-
-    id := 0
-    for _,channel := range channels {
-      if channel.users > minimum {
-        join[channel.name] = channel
-
-        client := clients[id % len(clients)]
-
-        debug_str := fmt.Sprintf("[DEBUG] client: %s channel.name: %s",client.GetNick(),channel.name)
-        fmt.Println(debug_str)
-
-
-        client.Join(channel.name)
-        debug_str = fmt.Sprintf("[DEBUG] %s has joined %d channels.",client.GetNick(),len(client.JoinedChannels) )
-        fmt.Println(debug_str)
-
-        time.Sleep(time.Duration(time.Millisecond * 100))
-      }
-      id++
-    }
-
+    debug_str := fmt.Sprintf("[DEBUG] Done listing channels!")
+    fmt.Println(debug_str)
   })
 
   //405 events are triggered when a client has joined too many channels
@@ -195,22 +195,7 @@ func main() {
   master.User()
   master.Nick()
   master.Join(command_and_control)
-  min,_ := strconv.Atoi(m)
-  master.List(min)
-
-  for id,client := range clients[1:] {
-
-    fmt.Println("[DEBUG] Starting up client #",id)
-
-    client.Run()
-    fmt.Println("[DEBUG] Running client: ",client.GetNick())
-    <- client.Ready
-    fmt.Println("[DEBUG] Client is ready: ",client.GetNick())
-    client.User()
-    client.Nick()
-    client.Join(command_and_control)
-  }
-
+  master.List()
 
   for _,client := range clients {
     <- client.Stopped
