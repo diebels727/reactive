@@ -2,15 +2,11 @@ package main
 
 import(
   "github.com/diebels727/spyglass"
-  // "github.com/gorilla/mux"
   "github.com/diebels727/faker"
   "flag"
-  // "net/http"
   "fmt"
   "strings"
   "strconv"
-  // "net"
-  // "net/textproto"
   "time"
   "os"
   "path"
@@ -200,12 +196,9 @@ func main() {
   //
   // }
 
-  master.RegisterEventHandler("323",func(event *spyglass.Event) {
-    debug_str := fmt.Sprintf("[DEBUG] Done listing channels!")
-    fmt.Println(debug_str)
-    debug_str = fmt.Sprintf("[DEBUG] Found %d channels!",len(channels))
-    fmt.Println(debug_str)
-  })
+  // master.RegisterEventHandler("323",func(event *spyglass.Event) {
+  //
+  // })
 
   //405 events are triggered when a client has joined too many channels
   // bot.RegisterEventHandler("405",func(event *spyglass.Event) {
