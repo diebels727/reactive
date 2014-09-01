@@ -158,6 +158,7 @@ func main() {
   if err != nil {
     panic("couldn't convert sleep duration to integer!")
   }
+
   oscillator := 0
   master.RegisterEventHandler("322",func(event *spyglass.Event) {
     arguments := event.RawArguments
