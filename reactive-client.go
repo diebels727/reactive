@@ -120,19 +120,27 @@ func main() {
       target VARCHAR(64),
       message TEXT
       );`)
+
+    db.Exec(`CREATE TABLE channels(
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      name VARCHAR(255),
+      users INTEGER,
+      joined_at INTEGER
+    );`)
+
     defer db.Close()
 
     clients[i] = NewClient(server,port,db)
     client := clients[i]
+
     client.Connect()
-    fmt.Println("[DEBUG] Starting up client #",i)
     client.Run()
-    fmt.Println("[DEBUG] Running client: ",client.GetNick())
     <- client.Ready
-    fmt.Println("[DEBUG] Client is ready: ",client.GetNick())
+
     client.User()
     client.Nick()
     client.Join(command_and_control)
+
     time.Sleep(time.Duration(time.Second * 3))
     defer client.Conn.Close()
 
@@ -143,7 +151,6 @@ func main() {
   master.Run()
 
   //react to event 322, which is each listed channel
-  oscillator := 0
   minimum,err := strconv.Atoi(m)
   if err != nil {
     panic("couldn't convert minimum to integer!")
@@ -151,7 +158,7 @@ func main() {
   if err != nil {
     panic("couldn't convert sleep duration to integer!")
   }
-
+  oscillator := 0
   master.RegisterEventHandler("322",func(event *spyglass.Event) {
     arguments := event.RawArguments
 
@@ -162,48 +169,25 @@ func main() {
       return
     }
 
-    name := args[1]
-
-    var users int
-
-    s := fmt.Sprintf("[DEBUG 322] RawArguments: %s",arguments)
-    fmt.Println(s)
-
     if len(args) <= 2 {
       fmt.Println("[DEBUG] Expected arguments to be length 2, but got ",len(args))
       return
     }
 
+    name := args[1]
 
-
-    // if len(args) > 1 {
-      users,err := strconv.Atoi(args[2])
-      if err != nil {
-        fmt.Println("[DEBUG] Cannot handle event. Args: ",args," users: ",users)
-        return
-      }
-    // } else {
-    //   fmt.Println("[DEBUG] Arguments are not long enough.")
-    //   return
-    // }
+    users,err := strconv.Atoi(args[2])
+    if err != nil {
+      fmt.Println("[DEBUG] Cannot handle event. Args: ",args," users: ",users)
+      return
+    }
 
     channel = Channel{name,users,false}
 
-    s = fmt.Sprintf("[DEBUG 322] Will join name: %s, users: %d",name,users)
-    fmt.Println(s)
-
     if channel.users > minimum {
-      debug_str := fmt.Sprintf("[DEBUG] Joining channel: %s,%d",args[1],args[2])
-      fmt.Println(debug_str)
       client := clients[oscillator % len(clients)]
-      debug_str = fmt.Sprintf("[DEBUG] client: %s channel.name: %s",client.GetNick(),channel.name)
-      fmt.Println(debug_str)
-      client.Join(channel.name)
-      debug_str = fmt.Sprintf("[DEBUG] %s has joined %d channels.",client.GetNick(),len(client.JoinedChannels) )
-      fmt.Println(debug_str)
-
-      // time.Sleep(time.Duration(time.Millisecond * 100))
-
+      // client.Join(channel.name)
+      client.JoinAndLog(channel.name,channel.users)
       oscillator++
     }
 
