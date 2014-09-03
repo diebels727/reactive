@@ -7,7 +7,8 @@ import (
   "path"
   "io/ioutil"
   "code.google.com/p/go-sqlite/go1/sqlite3"
-  // "database/sql"
+  "time"
+  "strconv"
 )
 
 type Event struct {
@@ -21,6 +22,7 @@ type Event struct {
 func ServerHandler(response http.ResponseWriter,request *http.Request) {
   response.Header().Set("Content-Type", "application/json")
   params := mux.Vars(request)
+
   db_root := "db"
 
   //open directory
@@ -45,7 +47,22 @@ func ServerHandler(response http.ResponseWriter,request *http.Request) {
     }
   }
 
-  sql := "SELECT * FROM events;"
+  var sql string
+  if len(params["minutes"]) > 0 {
+    current_time := time.Now().Unix()
+    fmt.Println("Current Time:",current_time)
+    minutes,err := strconv.Atoi(params["minutes"])
+    if err != nil {
+      fmt.Println(err)
+      http.Error(response,http.StatusText(500),500) //probably should not be a 500 -- this is a client error
+    }
+    seconds := minutes * 60
+    query_time := current_time - int64(seconds)
+    fmt.Println("Query Time:",query_time)
+    sql = fmt.Sprintf("SELECT * FROM events where events.timestamp < %d",query_time)
+  } else {
+    sql = "SELECT * FROM events;"
+  }
   row := make(sqlite3.RowMap)
   events := make([]Event,0)
   for _,db := range dbs {
@@ -58,7 +75,6 @@ func ServerHandler(response http.ResponseWriter,request *http.Request) {
         Source: row["source"].(string),
         Command: row["command"].(string),
       }
-      fmt.Println(row)
       events = append(events,event)
     }
   }
@@ -70,6 +86,7 @@ func main() {
   port := ":8080"
   router := mux.NewRouter()
   router.HandleFunc("/{server}",ServerHandler)
+  router.HandleFunc("/{server}/since/{minutes}",ServerHandler)
   http.Handle("/",router)
   http.ListenAndServe(port,nil)
   fmt.Println("done!")
