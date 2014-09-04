@@ -9,6 +9,7 @@ import (
   "code.google.com/p/go-sqlite/go1/sqlite3"
   "time"
   "strconv"
+  "encoding/json"
 )
 
 type Event struct {
@@ -80,7 +81,17 @@ func ServerHandler(response http.ResponseWriter,request *http.Request) {
     }
   }
 
-  fmt.Fprint(response,events)
+  //make me some JSON
+  bytes,err := json.Marshal(events)
+  if err != nil {
+    fmt.Println("Error marshalling events, aborting...")
+    return
+  }
+  jsonEvent := string(bytes)
+
+  fmt.Fprint(response,"{\"events\": "+jsonEvent+"}")
+
+  // fmt.Fprint(response,events)
 }
 
 func main() {
