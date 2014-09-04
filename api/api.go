@@ -62,7 +62,7 @@ func ServerHandler(response http.ResponseWriter,request *http.Request) {
     fmt.Println("Query Time:",query_time)
     sql = fmt.Sprintf("SELECT * FROM events where events.timestamp > %d AND events.message is not null AND events.source is not null;",query_time)
   } else {
-    sql = "SELECT * FROM events;"
+    sql = "SELECT * FROM events WHERE events.message is not null AND events.source is not null;"
   }
   row := make(sqlite3.RowMap)
   events := make([]Event,0)
