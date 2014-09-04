@@ -59,7 +59,7 @@ func ServerHandler(response http.ResponseWriter,request *http.Request) {
     seconds := minutes * 60
     query_time := current_time - int64(seconds)
     fmt.Println("Query Time:",query_time)
-    sql = fmt.Sprintf("SELECT * FROM events where events.timestamp < %d",query_time)
+    sql = fmt.Sprintf("SELECT * FROM events where events.timestamp > %d AND events.message is not null AND events.source is not null;",query_time)
   } else {
     sql = "SELECT * FROM events;"
   }
@@ -68,12 +68,13 @@ func ServerHandler(response http.ResponseWriter,request *http.Request) {
   for _,db := range dbs {
     for s,err := db.Query(sql); err == nil; err = s.Next() {
       s.Scan(row)
+
       event := Event{
         Timestamp: row["timestamp"].(int64),
         Message: row["message"].(string),
-        Bot: row["bot"].(string),
+        // Bot: row["bot"].(string),
         Source: row["source"].(string),
-        Command: row["command"].(string),
+        // Command: row["command"].(string),
       }
       events = append(events,event)
     }
