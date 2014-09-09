@@ -11,6 +11,9 @@ import(
   "os"
   "path"
   "path/filepath"
+
+  "gopkg.in/mgo.v2"
+  // "gopkg.in/mgo.v2/bson"
 )
 
 
@@ -32,6 +35,24 @@ type Channel struct {
   joined bool
 }
 
+type Datastore struct {
+  Session *mgo.Session
+}
+
+func NewDatastore(host string) (*Datastore) {
+  session, err := mgo.Dial("localhost")
+  if err != nil {
+    panic(err)
+  }
+  defer session.Close()
+  datastore := Datastore{session}
+  return &datastore
+}
+
+func (d *Datastore) Write(event *spyglass.Event) {
+  fmt.Println("[DATASTORE]:",event)
+}
+
 func init() {
   flag.StringVar(&server,"server","localhost","IRC server FQDN")
   flag.StringVar(&port,"port","6667","IRC server port number")
@@ -48,9 +69,8 @@ type Clients [](*spyglass.Bot)
 
 type Client *spyglass.Bot
 
-func NewClient(server string,port string,db *sqlite3.Conn) (bot *spyglass.Bot) {
+func NewClient(server string,port string) (bot *spyglass.Bot) {
   bot = spyglass.New(server,port,fake.Username(),fake.Username(),"")
-  bot.DB = db
   return bot
 }
 
@@ -89,12 +109,11 @@ func main() {
   clients = ([](*spyglass.Bot))(clients)
 
   for i:=0;i<len(clients);i++ {
-    //get handle to datastore
-    //defer the close
+
     clients[i] = NewClient(server,port)
     client := clients[i]
+    client.Datastore = NewDatastore("localhost")
 
-    //assign clients.Datastore to handle
     time.Sleep(time.Duration(time.Second * 10))
     client.Connect()
     client.Run()
