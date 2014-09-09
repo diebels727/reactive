@@ -11,8 +11,6 @@ import(
   "os"
   "path"
   "path/filepath"
-
-  "code.google.com/p/go-sqlite/go1/sqlite3"
 )
 
 
@@ -78,15 +76,6 @@ func main() {
   fake = faker.New()
   flag.Parse()
 
-  log_path,err := logPath(server)
-  if err != nil {
-    panic("Cannot create log path!")
-  }
-  err = makeLogPath(server)
-  if err != nil {
-    panic("Cannot create log path!")
-  }
-
   var channels map[string]Channel
   channels = make(map[string]Channel)
   var channel Channel
@@ -99,49 +88,23 @@ func main() {
 
   clients = ([](*spyglass.Bot))(clients)
 
-  var db *sqlite3.Conn
-
   for i:=0;i<len(clients);i++ {
-
-    //need to handle better  ... but just want it to work right now
-    db_name := fmt.Sprintf("_db%d.sqlite3",i)
-    db_path := path.Join(log_path,db_name)
-    db,_ = sqlite3.Open(db_path)
-    db.Exec(`CREATE TABLE events(
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      bot VARCHAR(32),
-      timestamp INTEGER,
-      source VARCHAR(255),
-      command VARCHAR(32),
-      target VARCHAR(64),
-      message TEXT
-      );`)
-
-    db.Exec(`CREATE TABLE channels(
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      name VARCHAR(255),
-      users INTEGER,
-      joined_at INTEGER
-    );`)
-
-    defer db.Close()
-
-    clients[i] = NewClient(server,port,db)
+    //get handle to datastore
+    //defer the close
+    clients[i] = NewClient(server,port)
     client := clients[i]
 
+    //assign clients.Datastore to handle
     time.Sleep(time.Duration(time.Second * 10))
     client.Connect()
-
     client.Run()
     <- client.Ready
-
     client.User()
     client.Nick()
     client.Join(command_and_control)
-
+    //client.Register()
     time.Sleep(time.Duration(time.Second * 10))
     defer client.Conn.Close()
-
   }
 
   master := clients[0]
@@ -185,8 +148,7 @@ func main() {
 
     if channel.users > minimum {
       client := clients[oscillator % len(clients)]
-      // client.Join(channel.name)
-      client.JoinAndLog(channel.name,channel.users)
+      client.Join(channel.name)
       oscillator++
     }
 
