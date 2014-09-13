@@ -8,14 +8,13 @@ import(
   "strings"
   "strconv"
   "time"
-  "os"
-  "path"
-  "path/filepath"
+  // "os"
+  // "path"
+  // "path/filepath"
 
   "gopkg.in/mgo.v2"
   // "gopkg.in/mgo.v2/bson"
 )
-
 
 var server string
 var port string
@@ -37,20 +36,39 @@ type Channel struct {
 
 type Datastore struct {
   Session *mgo.Session
+  Server string
+  Conn *mgo.Conn
 }
 
-func NewDatastore(host string) (*Datastore) {
+func NewDatastore(host string,server string) (*Datastore) {
+
+  fmt.Println("[DEBUG] Opening new connection!")
+
   session, err := mgo.Dial("localhost")
   if err != nil {
     panic(err)
   }
-  defer session.Close()
-  datastore := Datastore{session}
+  conn := session.DB("spyglass").C("events")
+  datastore := Datastore{session,server,conn}
   return &datastore
 }
 
 func (d *Datastore) Write(event *spyglass.Event) {
-  fmt.Println("[DATASTORE]:",event)
+  conn := d.Conn
+  err := conn.Insert(event)
+
+  fmt.Println("[DEBUG] Inserting event!")
+
+  if err != nil {
+    panic(err)
+  }
+}
+
+type Clients [](*spyglass.Bot)
+type Client *spyglass.Bot
+func NewClient(server string,port string) (bot *spyglass.Bot) {
+  bot = spyglass.New(server,port,fake.Username(),fake.Username(),"")
+  return bot
 }
 
 func init() {
@@ -63,33 +81,6 @@ func init() {
   flag.StringVar(&n,"n","1","Number of clients; minimum is one")
   flag.StringVar(&m,"m","50","Minimum number of users per channel")
   flag.StringVar(&s,"s","100","Amount of time to sleep between channel joins")
-}
-
-type Clients [](*spyglass.Bot)
-
-type Client *spyglass.Bot
-
-func NewClient(server string,port string) (bot *spyglass.Bot) {
-  bot = spyglass.New(server,port,fake.Username(),fake.Username(),"")
-  return bot
-}
-
-func toSlug(str string) string {
-  return strings.Replace(str,".","-",-1)
-}
-
-func logPath(server string) (string,error) {
-  slug := strings.Replace(server,".","-",-1)
-  log_path := path.Join(slug)
-  abs_log_path,err := filepath.Abs(log_path)
-  return abs_log_path,err
-}
-
-func makeLogPath(server string) error {
-  log_path,err := logPath(server)
-  file_mode := os.FileMode(0777)
-  err = os.MkdirAll(log_path,file_mode)
-  return err
 }
 
 func main() {
@@ -112,7 +103,9 @@ func main() {
 
     clients[i] = NewClient(server,port)
     client := clients[i]
-    client.Datastore = NewDatastore("localhost")
+    datastore := NewDatastore("localhost",server)
+    client.Datastore = datastore
+    defer datastore.Session.Close()
 
     time.Sleep(time.Duration(time.Second * 10))
     client.Connect()
