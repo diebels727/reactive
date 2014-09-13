@@ -36,29 +36,24 @@ type Channel struct {
 
 type Datastore struct {
   Session *mgo.Session
-  Server string
-  Conn *mgo.Conn
+  Collection *mgo.Collection
 }
 
 func NewDatastore(host string,server string) (*Datastore) {
-
-  fmt.Println("[DEBUG] Opening new connection!")
-
-  session, err := mgo.Dial("localhost")
+  session, err := mgo.Dial("localhost")  // need singleton session && copy if exists for the performance
+                                         // also need to be able to specify remote host; localhost it will not be
   if err != nil {
     panic(err)
   }
-  conn := session.DB("spyglass").C("events")
-  datastore := Datastore{session,server,conn}
+
+  collection := session.DB(server).C("events")
+  datastore := Datastore{session,collection}
   return &datastore
 }
 
 func (d *Datastore) Write(event *spyglass.Event) {
-  conn := d.Conn
-  err := conn.Insert(event)
-
-  fmt.Println("[DEBUG] Inserting event!")
-
+  collection := d.Collection
+  err := collection.Insert(event)
   if err != nil {
     panic(err)
   }
