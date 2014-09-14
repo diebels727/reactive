@@ -8,12 +8,7 @@ import(
   "strings"
   "strconv"
   "time"
-  // "os"
-  // "path"
-  // "path/filepath"
-
   "gopkg.in/mgo.v2"
-  // "gopkg.in/mgo.v2/bson"
 )
 
 var server string
@@ -168,19 +163,6 @@ func main() {
 
     channels[channel.name] = channel
   })
-
-  //Event 263: Server load too heavy.
-  // master.RegisterEventHandler("263",func(event *spyglass.Event)) {
-  //
-  // }
-
-  // master.RegisterEventHandler("323",func(event *spyglass.Event) {
-  //
-  // })
-
-  //405 events are triggered when a client has joined too many channels
-  // bot.RegisterEventHandler("405",func(event *spyglass.Event) {
-  // })
 
   <- master.Ready
 
