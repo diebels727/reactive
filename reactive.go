@@ -20,6 +20,7 @@ var command_and_control string
 var n string
 var m string
 var s string
+var mongo string
 
 var fake *faker.Faker
 
@@ -71,15 +72,17 @@ func init() {
   flag.StringVar(&n,"n","1","Number of clients; minimum is one")
   flag.StringVar(&m,"m","50","Minimum number of users per channel")
   flag.StringVar(&s,"s","100","Amount of time to sleep between channel joins")
+  flag.StringVar(&mongo,"mongo","localhost","Mongo address")
 }
 
 var session *mgo.Session  //if package Datastore, move this in to that package
 
 func main() {
-  session, err := mgo.Dial("localhost")
+  session, err := mgo.Dial(mongo)
   if err != nil {
     panic(err)
   }
+  defer session.Close()
 
   fake = faker.New()
   flag.Parse()
