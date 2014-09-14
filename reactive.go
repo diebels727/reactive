@@ -39,15 +39,15 @@ type Datastore struct {
   Collection *mgo.Collection
 }
 
-func NewDatastore(host string,server string) (*Datastore) {
-  session, err := mgo.Dial("localhost")  // need singleton session && copy if exists for the performance
-                                         // also need to be able to specify remote host; localhost it will not be
-  if err != nil {
-    panic(err)
-  }
+func slug(str string) string {
+  str = strings.ToLower(str)
+  return strings.Replace(str,".","-",-1)
+}
 
-  collection := session.DB(server).C("events")
-  datastore := Datastore{session,collection}
+func NewDatastore(host string,server string,session *mgo.Session) (*Datastore) {
+  local := session.Copy()
+  collection := local.DB(slug(server)).C("events")
+  datastore := Datastore{local,collection}
   return &datastore
 }
 
@@ -78,7 +78,14 @@ func init() {
   flag.StringVar(&s,"s","100","Amount of time to sleep between channel joins")
 }
 
+var session *mgo.Session  //if package Datastore, move this in to that package
+
 func main() {
+  session, err := mgo.Dial("localhost")
+  if err != nil {
+    panic(err)
+  }
+
   fake = faker.New()
   flag.Parse()
 
@@ -98,7 +105,7 @@ func main() {
 
     clients[i] = NewClient(server,port)
     client := clients[i]
-    datastore := NewDatastore("localhost",server)
+    datastore := NewDatastore("localhost",server,session)
     client.Datastore = datastore
     defer datastore.Session.Close()
 
