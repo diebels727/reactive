@@ -1,6 +1,4 @@
 fixes/
-* Abstract db
-* Remove schema definition from application
 * Generic logging with levels
 
 improvements/
@@ -16,6 +14,7 @@ improvements/
     - may require owning email server
   - when a nick is registered, log the nick/password in to a globally accessible database
   - these nicks are re-used
+* add time range query
 
 
 
