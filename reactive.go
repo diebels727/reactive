@@ -78,6 +78,8 @@ func init() {
 var session *mgo.Session  //if package Datastore, move this in to that package
 
 func main() {
+  flag.Parse()
+  fmt.Printf("Connecting to mongo:%s\n",mongo)
   session, err := mgo.Dial(mongo)
   if err != nil {
     panic(err)
@@ -85,7 +87,6 @@ func main() {
   defer session.Close()
 
   fake = faker.New()
-  flag.Parse()
 
   var channels map[string]Channel
   channels = make(map[string]Channel)
